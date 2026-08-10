@@ -99,4 +99,25 @@
               AND cp.product_id = #{productId}
         )
     </select>
+    <update id="fillCartProductInfo">
+        UPDATE oms_cart_item ci
+        INNER JOIN pms_product p ON p.id = ci.product_id
+        INNER JOIN pms_sku_stock sku ON sku.id = ci.product_sku_id,
+        (
+            <foreach collection="cartItems" item="item" separator=" UNION ALL ">
+                SELECT #{item.id} AS cid
+            </foreach>
+        ) AS tmp
+        SET
+            ci.product_name = p.`name`,
+            ci.product_pic = p.pic,
+            ci.product_sub_title = p.sub_title,
+            ci.price = sku.price,
+            ci.product_sku_code = sku.sku_code,
+            ci.product_category_id = p.product_category_id,
+            ci.product_brand = p.brand_name,
+            ci.product_sn = p.product_sn,
+            ci.product_attr = sku.sp_data
+        WHERE ci.id = tmp.cid
+    </update>
 </mapper>

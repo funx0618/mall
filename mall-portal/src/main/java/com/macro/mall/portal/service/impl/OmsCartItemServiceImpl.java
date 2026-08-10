@@ -75,7 +75,17 @@ public class OmsCartItemServiceImpl implements OmsCartItemService {
     public List<OmsCartItem> list(Long memberId) {
         OmsCartItemExample example = new OmsCartItemExample();
         example.createCriteria().andDeleteStatusEqualTo(0).andMemberIdEqualTo(memberId);
-        return cartItemMapper.selectByExample(example);
+        List<OmsCartItem> cartItemList = cartItemMapper.selectByExample(example);
+        // 补充缺失商品信息的购物车项
+        List<OmsCartItem> incompleteItems = cartItemList.stream()
+                .filter(item -> item.getProductName() == null || item.getProductName().isEmpty())
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(incompleteItems)) {
+            productDao.fillCartProductInfo(incompleteItems);
+            // 重新查询以获取补充后的数据
+            cartItemList = cartItemMapper.selectByExample(example);
+        }
+        return cartItemList;
     }
 
     @Override
