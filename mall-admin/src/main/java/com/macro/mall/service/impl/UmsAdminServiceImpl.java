@@ -59,18 +59,11 @@ public class UmsAdminServiceImpl implements UmsAdminService {
 
     @Override
     public UmsAdmin getAdminByUsername(String username) {
-        //先从缓存中获取数据
-        UmsAdmin admin = getCacheService().getAdmin(username);
-        if (admin != null) return admin;
-        //缓存中没有从数据库中获取
         UmsAdminExample example = new UmsAdminExample();
         example.createCriteria().andUsernameEqualTo(username);
         List<UmsAdmin> adminList = adminMapper.selectByExample(example);
         if (adminList != null && adminList.size() > 0) {
-            admin = adminList.get(0);
-            //将数据库中的数据存入缓存中
-            getCacheService().setAdmin(admin);
-            return admin;
+            return adminList.get(0);
         }
         return null;
     }
@@ -280,8 +273,9 @@ public class UmsAdminServiceImpl implements UmsAdminService {
     @Override
     public void logout(String username) {
         //清空缓存中的用户相关数据
-        UmsAdmin admin = getCacheService().getAdmin(username);
-        getCacheService().delAdmin(admin.getId());
-        getCacheService().delResourceList(admin.getId());
+        UmsAdmin admin = getAdminByUsername(username);
+        if (admin != null) {
+            getCacheService().delResourceList(admin.getId());
+        }
     }
 }
